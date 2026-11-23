@@ -2336,8 +2336,7 @@ Thank you for your business!`;
     renderPartiesGrid();
     showVideoScene(1);
   </script>
-  Extract JSON with: party_name (recipient after "Payment initiated to" or "Paid to", never the filename), amount (exact number without commas), type ("expense" if "Payment initiated", "Debit", or "Paid"; "income" if "Credited" or "Received"), bank_name, payment_mode (NEFT/RTGS/UPI/IMPS), transaction_id, date (YYYY-MM-DD), and status (e.g., SUCCESS or PENDING APPROVAL). If status is PENDING APPROVAL, append " (Pending)" to party_name.
-<script>
+  <script>
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js');
   }
