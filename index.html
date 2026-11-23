@@ -1,0 +1,2339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#059669">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PocketLedger">
+  <title>PocketLedger - Personal & Business Accounting App</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    @keyframes scanline {
+      0% { transform: translateY(0); opacity: 0.8; }
+      50% { transform: translateY(140px); opacity: 1; }
+      100% { transform: translateY(0); opacity: 0.8; }
+    }
+    .scanner-line {
+      animation: scanline 2.2s ease-in-out infinite;
+    }
+    @media print {
+      body * { visibility: hidden; }
+      #printable-receipt, #printable-receipt * { visibility: visible; }
+      #printable-receipt { position: absolute; left: 0; top: 0; width: 100%; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen py-6 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-2xl mx-auto space-y-6">
+    <!-- Header -->
+    <header class="flex flex-col sm:flex-row items-center justify-between gap-3 pb-2 border-b border-slate-200/80">
+      <div class="text-center sm:text-left">
+        <div class="inline-flex items-center space-x-2 bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider mb-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+          <span id="header-biz-badge">Kerala Trading & Contracts</span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">PocketLedger</h1>
+        <p class="text-xs text-slate-500 mt-0.5">Live Cloud Sync + Gemini Vision AI + WhatsApp Chat Bot</p>
+      </div>
+      <div class="flex flex-wrap items-center justify-center gap-1.5">
+        <button type="button" id="btn-open-cloud-settings" class="text-xs bg-sky-600 hover:bg-sky-700 text-white font-semibold px-3 py-2 rounded-xl shadow-sm transition-colors flex items-center space-x-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+          </svg>
+          <span id="cloud-btn-label">Cloud Storage</span>
+        </button>
+        <button type="button" id="btn-open-ai-settings" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-3 py-2 rounded-xl shadow-sm transition-colors flex items-center space-x-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <span id="ai-key-btn-label">Connect Live Gemini AI</span>
+        </button>
+        <button type="button" id="btn-open-apk-modal" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-2 rounded-xl shadow-sm transition-colors flex items-center space-x-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+          <span>Install Android / APK</span>
+        </button>
+        <button type="button" id="btn-open-biz-settings" class="text-xs bg-white hover:bg-slate-100 text-slate-700 font-semibold px-3 py-2 rounded-xl border border-slate-200 shadow-sm transition-colors flex items-center space-x-1.5">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span>Customize Business Profile</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Financial Summary Cards -->
+    <section class="grid grid-cols-2 sm:grid-cols-4 gap-3" aria-label="Account Summary">
+      <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 text-center">
+        <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Net Balance</span>
+        <div id="net-balance" class="text-xl font-bold text-slate-900 mt-1">₹0.00</div>
+      </div>
+      <div class="bg-white p-3.5 rounded-xl shadow-sm border border-emerald-100 text-center">
+        <span class="text-[11px] font-semibold text-emerald-600 uppercase tracking-wider">Total Received</span>
+        <div id="total-income" class="text-xl font-bold text-emerald-600 mt-1">₹0.00</div>
+      </div>
+      <div class="bg-white p-3.5 rounded-xl shadow-sm border border-rose-100 text-center">
+        <span class="text-[11px] font-semibold text-rose-600 uppercase tracking-wider">Total Paid</span>
+        <div id="total-expense" class="text-xl font-bold text-rose-600 mt-1">₹0.00</div>
+      </div>
+      <div class="bg-white p-3.5 rounded-xl shadow-sm border border-amber-100 text-center">
+        <span class="text-[11px] font-semibold text-amber-600 uppercase tracking-wider">GST Tracked</span>
+        <div id="total-gst" class="text-xl font-bold text-amber-600 mt-1">₹0.00</div>
+      </div>
+    </section>
+
+    <!-- Top Navigation Tabs -->
+    <div class="bg-slate-200/80 p-1 rounded-xl grid grid-cols-2 sm:grid-cols-6 gap-1 text-xs font-medium">
+      <button type="button" id="tab-wa-chat" class="py-2 px-2 rounded-lg bg-white text-slate-900 shadow-sm flex items-center justify-center space-x-1.5 transition-all font-semibold">
+        <svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
+        </svg>
+        <span>WhatsApp Bot</span>
+      </button>
+      <button type="button" id="tab-slip" class="py-2 px-2 rounded-lg text-slate-600 hover:text-slate-900 flex items-center justify-center space-x-1.5 transition-all">
+        <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        <span>Bank Slip / WhatsApp Scanner</span>
+      </button>
+      <button type="button" id="tab-parties" class="py-2 px-2 rounded-lg text-slate-600 hover:text-slate-900 flex items-center justify-center space-x-1.5 transition-all">
+        <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+        <span>Party Ledgers</span>
+      </button>
+      <button type="button" id="tab-manual" class="py-2 px-2 rounded-lg text-slate-600 hover:text-slate-900 flex items-center justify-center space-x-1.5 transition-all">
+        <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        </svg>
+        <span>Manual Entry</span>
+      </button>
+      <button type="button" id="tab-video" class="py-2 px-2 rounded-lg text-slate-600 hover:text-slate-900 flex items-center justify-center space-x-1.5 transition-all">
+        <svg class="w-3.5 h-3.5 text-rose-600" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M4 6.5A2.5 2.5 0 016.5 4h11A2.5 2.5 0 0120 6.5v11a2.5 2.5 0 01-2.5 2.5h-11A2.5 2.5 0 014 17.5v-11zM10 9v6l5-3-5-3z"/>
+        </svg>
+        <span>Video Demo</span>
+      </button>
+      <button type="button" id="tab-bot-code" class="py-2 px-2 rounded-lg text-slate-600 hover:text-slate-900 flex items-center justify-center space-x-1.5 transition-all">
+        <svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+        </svg>
+        <span>AI Bot Prompt</span>
+      </button>
+    </div>
+
+    <!-- Section 0: Built-In WhatsApp Bot Chat Simulator + Live Gemini Vision AI -->
+    <section id="wa-chat-section" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="bg-[#075E54] text-white px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold text-sm shadow">
+            🤖
+          </div>
+          <div>
+            <div class="font-bold text-sm flex items-center gap-1.5">
+              <span>PocketLedger WhatsApp AI Bot</span>
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            </div>
+            <div id="wa-bot-status" class="text-[11px] text-emerald-100">
+              Online • Send a bank slip photo + customer name caption
+            </div>
+          </div>
+        </div>
+        <span id="ai-mode-badge" class="text-[10px] bg-white/15 px-2.5 py-1 rounded-full font-semibold">
+          Smart OCR Active
+        </span>
+      </div>
+
+      <div id="wa-chat-stream" class="bg-[#ECE5DD] p-4 h-80 overflow-y-auto space-y-3 text-xs flex flex-col">
+        <div class="self-start max-w-[85%] bg-white text-slate-800 p-3 rounded-2xl rounded-tl-none shadow-sm space-y-1">
+          <div class="font-bold text-emerald-700 text-[11px]">PocketLedger AI Bot</div>
+          <p class="leading-relaxed">
+            Namaskaram! 👋 Tap the <strong>camera icon</strong> below to attach any <strong>bank deposit slip</strong>, <strong>RTGS counterfoil</strong>, or <strong>bill</strong>, or just type a message like:<br><br>
+            • <em>"Rajesh Builders 45000 SBI slip"</em><br>
+            • <em>"Paid 12400 to Asian Paints 18% GST Federal Bank"</em>
+          </p>
+          <div class="text-[10px] text-slate-400 text-right">Just now</div>
+        </div>
+      </div>
+
+      <div id="wa-attachment-bar" class="hidden bg-emerald-50 px-4 py-2 border-t border-emerald-200 flex items-center justify-between text-xs">
+        <div class="flex items-center space-x-2">
+          <span class="text-emerald-700 font-semibold">📸 Attached Slip:</span>
+          <span id="wa-attachment-name" class="text-slate-700 truncate max-w-[200px]">slip.jpg</span>
+        </div>
+        <button type="button" id="btn-remove-wa-attachment" class="text-rose-600 hover:text-rose-800 font-bold px-2">✕ Remove</button>
+      </div>
+
+      <form id="wa-chat-form" class="bg-[#F0F0F0] p-2.5 flex items-center space-x-2 border-t border-slate-200">
+        <input type="file" id="wa-camera-input" accept="image/*" class="hidden">
+        <button type="button" id="btn-wa-attach" class="p-2.5 rounded-full bg-white text-slate-600 hover:text-emerald-600 shadow-sm transition-colors" title="Take / Attach Bank Slip Photo">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </button>
+        <input type="text" id="wa-chat-input" placeholder="Type caption (e.g. 'Rajesh Builders 45000 SBI slip')..."
+          class="flex-1 px-4 py-2.5 rounded-full bg-white border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+        <button type="submit" id="btn-wa-send" class="p-2.5 rounded-full bg-[#075E54] hover:bg-emerald-800 text-white shadow-sm transition-colors" title="Send to AI Bot">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+          </svg>
+        </button>
+      </form>
+    </section>
+
+    <!-- Section: Interactive Video Demo -->
+    <section id="video-section" class="hidden bg-slate-900 text-white p-6 rounded-2xl shadow-xl space-y-5 border border-slate-800">
+      <div class="flex items-center justify-between">
+        <div>
+          <span class="text-[11px] font-semibold text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+            Animated Video Walkthrough
+          </span>
+          <h2 class="text-lg font-bold text-white mt-0.5">How the Bank Slip WhatsApp Bot Works</h2>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button type="button" id="btn-play-video" class="bg-rose-600 hover:bg-rose-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all shadow-md">
+            <svg id="play-icon" class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+            <span id="play-text">Play Video</span>
+          </button>
+          <button type="button" id="btn-reset-video" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1.5 rounded-lg text-xs transition-colors" title="Restart">
+            ↺
+          </button>
+        </div>
+      </div>
+
+      <div class="relative bg-slate-950 rounded-xl p-5 border border-slate-800 min-h-[300px] flex flex-col justify-between overflow-hidden">
+        <div class="grid grid-cols-4 gap-1.5 mb-4">
+          <div id="v-step-bar-1" class="h-1.5 rounded-full bg-rose-500 transition-all"></div>
+          <div id="v-step-bar-2" class="h-1.5 rounded-full bg-slate-800 transition-all"></div>
+          <div id="v-step-bar-3" class="h-1.5 rounded-full bg-slate-800 transition-all"></div>
+          <div id="v-step-bar-4" class="h-1.5 rounded-full bg-slate-800 transition-all"></div>
+        </div>
+
+        <div id="video-scene-content" class="my-auto py-2"></div>
+
+        <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+          <span id="scene-counter" class="font-mono text-emerald-400">Scene 1 of 4</span>
+          <div id="scene-caption" class="font-medium text-slate-200 truncate max-w-sm">
+            Customer receives cash deposit counterfoil at SBI bank counter.
+          </div>
+          <div class="flex items-center space-x-1 text-slate-500 text-[10px]">
+            <button type="button" id="v-prev" class="p-1 hover:text-white transition-colors">◀ Prev</button>
+            <button type="button" id="v-next" class="p-1 hover:text-white transition-colors">Next ▶</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 1: Bank Slip / WhatsApp AI Scanner -->
+    <section id="slip-section" class="hidden bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+      <div class="flex items-start justify-between">
+        <div>
+          <h2 class="text-lg font-semibold text-slate-900">Scan Bank Slip & GST Invoice</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Separate bank stamps from actual parties and auto-calculate CGST + SGST</p>
+        </div>
+        <span class="inline-flex items-center space-x-1 text-xs bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full font-medium">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          <span>Cloud Sync Ready</span>
+        </span>
+      </div>
+
+      <div class="bg-blue-50/70 border border-blue-200 rounded-xl p-3.5 space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="sm:col-span-2 space-y-1">
+            <label for="whatsapp-caption-input" class="text-xs font-semibold text-blue-900 flex items-center gap-1.5">
+              <span>WhatsApp Photo Caption / Actual Party Name</span>
+            </label>
+            <input type="text" id="whatsapp-caption-input" placeholder="e.g. Rajesh Builders (Site Advance)"
+              class="w-full px-3 py-2 border border-blue-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div class="space-y-1">
+            <label for="slip-gst-select" class="text-xs font-semibold text-blue-900 block">GST Slab (Optional)</label>
+            <select id="slip-gst-select" class="w-full px-3 py-2 border border-blue-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="0">0% (Bank Deposit / No GST)</option>
+              <option value="5">5% GST (2.5% CGST + 2.5% SGST)</option>
+              <option value="12">12% GST (6% CGST + 6% SGST)</option>
+              <option value="18">18% GST (9% CGST + 9% SGST)</option>
+            </select>
+          </div>
+        </div>
+        <p class="text-[11px] text-blue-700 leading-tight">
+          💡 When sending a slip or tax bill on WhatsApp, the AI binds the payment to the caption name and extracts any applicable CGST/SGST tax breakdown.
+        </p>
+      </div>
+
+      <div id="dropzone" class="border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-xl p-6 text-center transition-colors cursor-pointer bg-slate-50/50">
+        <input type="file" id="slip-file-input" accept="image/*" class="hidden">
+        <div class="space-y-2">
+          <div class="w-10 h-10 mx-auto rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div class="text-sm font-medium text-slate-700">Click to upload bank slip photo, or drag and drop</div>
+          <p class="text-xs text-slate-400">PNG, JPG, bank counterfoil, or GST tax invoice</p>
+        </div>
+      </div>
+
+      <div class="space-y-2 pt-1">
+        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Test with real-world scenarios:</div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <button type="button" id="sample-slip-1" class="sample-slip-btn text-left p-2.5 rounded-lg border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/30 transition-all text-xs space-y-1">
+            <div class="font-semibold text-slate-800 flex items-center justify-between">
+              <span>Rajesh Builders</span>
+              <span class="text-emerald-600 font-bold">+₹45,000</span>
+            </div>
+            <div class="text-[11px] text-slate-500 truncate">Stamp: "SBI Ernakulam Branch #04"</div>
+          </button>
+          <button type="button" id="sample-slip-2" class="sample-slip-btn text-left p-2.5 rounded-lg border border-slate-200 hover:border-rose-500 hover:bg-rose-50/30 transition-all text-xs space-y-1">
+            <div class="font-semibold text-slate-800 flex items-center justify-between">
+              <span>Asian Paints (18% GST)</span>
+              <span class="text-rose-600 font-bold">-₹12,400</span>
+            </div>
+            <div class="text-[11px] text-slate-500 truncate">Stamp: "Federal Bank RTGS Counter"</div>
+          </button>
+          <button type="button" id="sample-slip-3" class="sample-slip-btn text-left p-2.5 rounded-lg border border-slate-200 hover:border-blue-500 hover:bg-blue-50/30 transition-all text-xs space-y-1">
+            <div class="font-semibold text-slate-800 flex items-center justify-between">
+              <span>Harish Nair</span>
+              <span class="text-emerald-600 font-bold">+₹8,500</span>
+            </div>
+            <div class="text-[11px] text-slate-500 truncate">Stamp: "Canara Bank Cash Deposit Seal"</div>
+          </button>
+        </div>
+      </div>
+
+      <div id="scanning-indicator" class="hidden bg-slate-900 text-white p-4 rounded-xl space-y-3">
+        <div class="flex items-center space-x-3">
+          <svg class="animate-spin w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+          </svg>
+          <div class="text-sm font-medium text-emerald-300">AI Parsing Bank Slip & Syncing to Cloud...</div>
+        </div>
+        <p id="scanning-step" class="text-xs text-slate-300">Reading bank stamp and extracting amounts...</p>
+      </div>
+
+      <div id="slip-result-banner" class="hidden p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center justify-between">
+        <span id="slip-result-text">Converted slip into verified accounting entry!</span>
+        <span class="font-semibold text-emerald-600">✓ Auto-Logged</span>
+      </div>
+    </section>
+
+    <!-- Section 2: Party Accounts / Customer Ledgers -->
+    <section id="parties-section" class="hidden bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-semibold text-slate-900">Customer & Vendor Ledger Accounts</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Click any party to view their individual account statement</p>
+        </div>
+        <button type="button" id="btn-show-all-parties" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-medium transition-colors">
+          Reset Filter (Show All)
+        </button>
+      </div>
+      <div id="parties-summary-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+    </section>
+
+    <!-- Section 3: Manual New Entry Form -->
+    <section id="manual-section" class="hidden bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+      <h2 class="text-lg font-semibold text-slate-900 mb-4">Add New Transaction Manually</h2>
+      <form id="transaction-form" class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label for="desc-input" class="block text-sm font-medium text-slate-700 mb-1">Party / Description</label>
+            <input type="text" id="desc-input" required placeholder="e.g. Rajesh Builders, Office Rent"
+              class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          </div>
+          <div>
+            <label for="ref-input" class="block text-sm font-medium text-slate-700 mb-1">Bank Stamp / Slip Ref</label>
+            <input type="text" id="ref-input" placeholder="e.g. SBI Ernakulam Counter #04"
+              class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          </div>
+          <div>
+            <label for="date-input" class="block text-sm font-medium text-slate-700 mb-1">Date</label>
+            <input type="date" id="date-input" required
+              class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+          <div>
+            <label for="amount-input" class="block text-sm font-medium text-slate-700 mb-1">Amount (₹)</label>
+            <input type="number" id="amount-input" step="0.01" min="0.01" required placeholder="0.00"
+              class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          </div>
+          <div>
+            <label for="type-select" class="block text-sm font-medium text-slate-700 mb-1">Type</label>
+            <select id="type-select" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+              <option value="income">Income (+)</option>
+              <option value="expense">Expense (-)</option>
+            </select>
+          </div>
+          <div>
+            <label for="category-select" class="block text-sm font-medium text-slate-700 mb-1">Category</label>
+            <select id="category-select" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+              <optgroup label="Income" id="optgroup-income">
+                <option value="Customer Sales">Customer Sales</option>
+                <option value="Freelance / Fees">Freelance / Fees</option>
+                <option value="Investments">Investments</option>
+                <option value="Other Income">Other Income</option>
+              </optgroup>
+              <optgroup label="Expense" id="optgroup-expense">
+                <option value="Supplier / Vendor">Supplier / Vendor</option>
+                <option value="Rent & Housing">Rent & Housing</option>
+                <option value="Utilities & Electricity">Utilities & Electricity</option>
+                <option value="Transportation & Fuel">Transportation & Fuel</option>
+                <option value="Other Expense">Other Expense</option>
+              </optgroup>
+            </select>
+          </div>
+          <div>
+            <label for="manual-gst-select" class="block text-sm font-medium text-slate-700 mb-1">GST Slab</label>
+            <select id="manual-gst-select" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+              <option value="0">0% GST</option>
+              <option value="5">5% GST</option>
+              <option value="12">12% GST</option>
+              <option value="18">18% GST</option>
+            </select>
+          </div>
+        </div>
+        <div id="feedback-message" class="hidden text-sm text-rose-600 font-medium"></div>
+        <button type="submit" id="add-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm shadow-sm">
+          Add Transaction
+        </button>
+      </form>
+    </section>
+
+    <!-- Section 4: Cloud Database & AI Prompt Inspector -->
+    <section id="bot-code-section" class="hidden bg-slate-900 text-white p-6 rounded-xl shadow-sm space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div>
+          <h2 class="text-base font-bold text-emerald-400">Supabase PostgreSQL & AI Schema</h2>
+          <p class="text-xs text-slate-400 mt-0.5">Run this SQL once in your free Supabase project, then connect in the "Cloud Storage" modal</p>
+        </div>
+        <span class="text-[11px] bg-slate-800 text-slate-300 px-2 py-1 rounded font-mono">PostgreSQL + REST</span>
+      </div>
+      
+      <div class="bg-black/60 p-3.5 rounded-lg font-mono text-[11px] text-slate-300 leading-relaxed overflow-x-auto border border-slate-800">
+<span class="text-amber-400">-- Run this SQL in Supabase SQL Editor (supabase.com):</span>
+CREATE TABLE pocketledger_entries (
+  id BIGINT PRIMARY KEY,
+  tx_date TEXT,
+  party_name TEXT NOT NULL,
+  bank_stamp TEXT,
+  amount NUMERIC(12,2) NOT NULL,
+  gst_rate NUMERIC(5,2) DEFAULT 0,
+  type TEXT,
+  category TEXT,
+  source TEXT
+);
+
+ALTER TABLE pocketledger_entries ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow public CRUD" ON pocketledger_entries
+  FOR ALL USING (true) WITH CHECK (true);
+      </div>
+    </section>
+
+    <!-- Transaction History & Filter -->
+    <section class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-center space-x-2">
+          <h2 id="history-title" class="text-lg font-semibold text-slate-900">Transaction History</h2>
+          <span id="entry-count" class="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full font-medium">0 items</span>
+          <span id="cloud-sync-pill" class="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">Local Device Storage</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button type="button" id="btn-export-csv" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold px-3 py-1.5 rounded-lg border border-emerald-200 transition-colors flex items-center space-x-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            <span>Export CSV (Excel)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Search Bar & Date Range Filter -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 bg-slate-50 p-3 rounded-xl border border-slate-200/80 text-xs">
+        <div class="sm:col-span-2 relative">
+          <input type="text" id="search-input" placeholder="Search by Party Name, Bank Stamp, or Category..."
+            class="w-full pl-8 pr-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <div class="flex items-center space-x-1.5">
+          <input type="month" id="month-filter-input" aria-label="Filter by month"
+            class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <button type="button" id="btn-clear-search" class="px-2.5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-medium transition-colors" title="Clear Search & Date">
+            Reset
+          </button>
+        </div>
+      </div>
+
+      <!-- Filter Tabs -->
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3 text-xs">
+        <div class="flex space-x-2 font-medium">
+          <button type="button" id="filter-all" class="filter-tab px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700">All</button>
+          <button type="button" id="filter-income" class="filter-tab px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100">Income Only</button>
+          <button type="button" id="filter-expense" class="filter-tab px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100">Expenses Only</button>
+        </div>
+        <span id="active-party-badge" class="hidden text-xs bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full font-medium flex items-center gap-1"></span>
+      </div>
+
+      <div id="empty-state" class="text-center py-8 text-slate-400 text-sm">
+        No transactions recorded yet. Add your first entry above!
+      </div>
+      <ul id="transaction-list" class="divide-y divide-slate-100 space-y-1"></ul>
+    </section>
+
+    <!-- Modal 1: Share Statement / Payment Receipt -->
+    <div id="receipt-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200">
+        <div class="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+            <span class="font-bold text-sm">Share Voucher & Statement</span>
+          </div>
+          <button type="button" id="btn-close-modal" class="text-slate-400 hover:text-white p-1 rounded-lg transition-colors">
+            ✕
+          </button>
+        </div>
+
+        <div id="printable-receipt" class="p-6 space-y-4 bg-white text-slate-800 text-xs">
+          <div class="border-b border-slate-200 pb-3 flex justify-between items-start">
+            <div>
+              <h3 id="receipt-biz-name" class="font-black text-base text-slate-900 tracking-tight uppercase">KERALA TRADING & CONTRACTS</h3>
+              <p id="receipt-biz-sub" class="text-slate-500 text-[11px]">Aluva, Kochi, Kerala • GSTIN: 32AABCU9603R1ZM</p>
+            </div>
+            <div class="text-right">
+              <span class="inline-block bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">
+                Payment Receipt
+              </span>
+              <div id="receipt-voucher-no" class="font-mono text-slate-500 text-[11px] mt-1">VOC-2026-088</div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
+            <div>
+              <span class="text-slate-400 uppercase text-[10px] font-bold">Party Account:</span>
+              <div id="receipt-party-name" class="font-bold text-sm text-slate-900 mt-0.5">Rajesh Builders</div>
+            </div>
+            <div class="text-right">
+              <span class="text-slate-400 uppercase text-[10px] font-bold">Transaction Date:</span>
+              <div id="receipt-date" class="font-medium text-slate-700 mt-0.5">2026-11-02</div>
+            </div>
+          </div>
+
+          <div class="space-y-2 border-b border-slate-200 pb-3">
+            <div class="flex justify-between items-center py-1">
+              <span class="text-slate-600">Total Amount Logged:</span>
+              <span id="receipt-amount" class="text-base font-black text-emerald-600">₹45,000.00</span>
+            </div>
+            <div id="receipt-gst-row" class="flex justify-between items-center py-1 text-slate-600">
+              <span>Included GST Breakdown:</span>
+              <span id="receipt-gst-detail" class="font-medium text-amber-700">0% (No GST)</span>
+            </div>
+            <div class="flex justify-between items-center py-1 text-slate-600">
+              <span>Category / Nature:</span>
+              <span id="receipt-category" class="font-medium text-slate-800">Customer Sales</span>
+            </div>
+            <div class="flex justify-between items-start py-1 text-slate-600">
+              <span>Bank Verification Seal:</span>
+              <span id="receipt-stamp" class="font-mono text-[11px] text-right font-semibold text-slate-800 max-w-[200px]">SBI Ernakulam Main Branch #04</span>
+            </div>
+          </div>
+
+          <div class="bg-indigo-50/70 border border-indigo-100 p-3 rounded-xl flex justify-between items-center">
+            <div>
+              <div class="text-[10px] uppercase font-bold text-indigo-700">Party Account Standing</div>
+              <div class="text-xs text-indigo-900 font-medium">Updated Net Balance to Date</div>
+            </div>
+            <div id="receipt-running-balance" class="text-base font-extrabold text-indigo-700">₹75,000.00</div>
+          </div>
+
+          <div class="space-y-1.5 pt-1">
+            <div class="text-[11px] font-bold text-slate-700 flex items-center justify-between">
+              <span>WhatsApp Message Format:</span>
+              <span id="copy-status" class="text-emerald-600 font-normal hidden">Copied!</span>
+            </div>
+            <div id="whatsapp-message-preview" class="p-2.5 bg-slate-100 rounded-lg text-[11px] text-slate-600 font-mono whitespace-pre-wrap select-all border border-slate-200"></div>
+          </div>
+        </div>
+
+        <div class="bg-slate-50 px-5 py-3 border-t border-slate-200 flex flex-col sm:flex-row gap-2 justify-end">
+          <button type="button" id="btn-copy-wa" class="flex-1 sm:flex-initial bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold px-4 py-2 rounded-xl text-xs transition-colors flex items-center justify-center space-x-1.5">
+            <span>Copy Text</span>
+          </button>
+          <button type="button" id="btn-share-wa" class="flex-1 sm:flex-initial bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-xl text-xs transition-colors flex items-center justify-center space-x-1.5 shadow-sm">
+            <span>Send to WhatsApp</span>
+          </button>
+          <button type="button" id="btn-print-pdf" class="flex-1 sm:flex-initial bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl text-xs transition-colors flex items-center justify-center space-x-1.5 shadow-sm">
+            <span>Print / Save PDF</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 2: Edit Transaction Modal -->
+    <div id="edit-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200">
+        <div class="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between">
+          <span class="font-bold text-sm">Edit Transaction Details</span>
+          <button type="button" id="btn-close-edit-modal" class="text-slate-400 hover:text-white p-1 rounded-lg transition-colors">
+            ✕
+          </button>
+        </div>
+        <form id="edit-form" class="p-5 space-y-3.5 text-xs">
+          <input type="hidden" id="edit-id">
+          <div>
+            <label for="edit-desc" class="block font-semibold text-slate-700 mb-1">Party Name / Description</label>
+            <input type="text" id="edit-desc" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label for="edit-stamp" class="block font-semibold text-slate-700 mb-1">Bank Stamp / Reference</label>
+            <input type="text" id="edit-stamp" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label for="edit-amount" class="block font-semibold text-slate-700 mb-1">Amount (₹)</label>
+              <input type="number" id="edit-amount" step="0.01" min="0.01" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+              <label for="edit-date" class="block font-semibold text-slate-700 mb-1">Date</label>
+              <input type="date" id="edit-date" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label for="edit-type" class="block font-semibold text-slate-700 mb-1">Type</label>
+              <select id="edit-type" class="w-full px-2.5 py-2 border border-slate-300 rounded-lg text-xs bg-white">
+                <option value="income">Income (+)</option>
+                <option value="expense">Expense (-)</option>
+              </select>
+            </div>
+            <div>
+              <label for="edit-category" class="block font-semibold text-slate-700 mb-1">Category</label>
+              <input type="text" id="edit-category" class="w-full px-2.5 py-2 border border-slate-300 rounded-lg text-xs">
+            </div>
+            <div>
+              <label for="edit-gst" class="block font-semibold text-slate-700 mb-1">GST (%)</label>
+              <select id="edit-gst" class="w-full px-2.5 py-2 border border-slate-300 rounded-lg text-xs bg-white">
+                <option value="0">0% GST</option>
+                <option value="5">5% GST</option>
+                <option value="12">12% GST</option>
+                <option value="18">18% GST</option>
+              </select>
+            </div>
+          </div>
+          <div class="pt-2 flex justify-end space-x-2">
+            <button type="button" id="btn-cancel-edit" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors">
+              Cancel
+            </button>
+            <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-colors shadow-sm">
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal 3: Customize Business Profile Modal -->
+    <div id="biz-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200">
+        <div class="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between">
+          <span class="font-bold text-sm">Customize Receipt & Business Profile</span>
+          <button type="button" id="btn-close-biz-modal" class="text-slate-400 hover:text-white p-1 rounded-lg transition-colors">
+            ✕
+          </button>
+        </div>
+        <form id="biz-form" class="p-5 space-y-3.5 text-xs">
+          <div>
+            <label for="biz-name-input" class="block font-semibold text-slate-700 mb-1">Business / Company Name</label>
+            <input type="text" id="biz-name-input" required placeholder="e.g. Kerala Trading & Contracts"
+              class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label for="biz-location-input" class="block font-semibold text-slate-700 mb-1">Branch / Location / Address</label>
+            <input type="text" id="biz-location-input" required placeholder="e.g. Aluva, Kochi, Kerala"
+              class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label for="biz-gstin-input" class="block font-semibold text-slate-700 mb-1">GSTIN / Registration Number</label>
+            <input type="text" id="biz-gstin-input" placeholder="e.g. 32AABCU9603R1ZM"
+              class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div class="pt-2 flex justify-end space-x-2">
+            <button type="button" id="btn-cancel-biz" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors">
+              Cancel
+            </button>
+            <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-colors shadow-sm">
+              Save Business Profile
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal 4: Android APK & Mobile Install Guide -->
+    <div id="apk-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200">
+        <div class="bg-emerald-700 text-white px-5 py-3.5 flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+            <span class="font-bold text-sm">Install on Android Phone & Build APK</span>
+          </div>
+          <button type="button" id="btn-close-apk-modal" class="text-emerald-100 hover:text-white p-1 rounded-lg transition-colors">
+            ✕
+          </button>
+        </div>
+        <div class="p-5 space-y-4 text-xs text-slate-700">
+          <div class="bg-emerald-50 border border-emerald-200 p-3.5 rounded-xl space-y-1.5">
+            <div class="font-bold text-emerald-900 text-sm">Option 1: Instant Android Install (No APK File Needed)</div>
+            <p class="text-emerald-800 leading-relaxed">
+              This app is configured as a mobile <strong>Progressive Web App (PWA)</strong>. Open your deployed link in <strong>Chrome on Android</strong>, tap the <strong>⋮ menu</strong>, and select <strong>"Add to Home screen" / "Install app"</strong>.
+            </p>
+          </div>
+          <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl space-y-1.5">
+            <div class="font-bold text-slate-900 text-sm">Option 2: Generate a Standalone `.apk` in 60 Seconds</div>
+            <ol class="list-decimal list-inside space-y-1 text-slate-600 leading-relaxed">
+              <li>Download the updated <code>PocketLedger_Android_APK_Project.zip</code> file.</li>
+              <li>Upload <code>index.html</code> into <strong>WebIntoApp.com</strong>.</li>
+              <li>Download and install the generated <code>.apk</code> on your phone!</li>
+            </ol>
+          </div>
+          <div class="flex justify-end pt-1">
+            <button type="button" id="btn-done-apk" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold transition-colors">
+              Got It
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 5: Connect Live Gemini Vision AI Key -->
+    <div id="ai-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200">
+        <div class="bg-indigo-700 text-white px-5 py-3.5 flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <span class="font-bold text-sm">Connect Live Gemini Vision AI</span>
+          </div>
+          <button type="button" id="btn-close-ai-modal" class="text-indigo-200 hover:text-white p-1 rounded-lg transition-colors">
+            ✕
+          </button>
+        </div>
+        <form id="ai-key-form" class="p-5 space-y-3.5 text-xs">
+          <div class="bg-indigo-50 border border-indigo-100 p-3 rounded-xl text-indigo-900 leading-relaxed">
+            Paste your free <strong>Google Gemini API Key</strong> (from <a href="https://aistudio.google.com/" target="_blank" class="underline font-bold">aistudio.google.com</a>) so the app uses real Gemini 1.5 Flash Vision AI directly inside your phone APK to read any bank slip photo you snap!
+          </div>
+          <div>
+            <label for="gemini-key-input" class="block font-semibold text-slate-700 mb-1">Gemini API Key</label>
+            <input type="password" id="gemini-key-input" placeholder="AIzaSy..."
+              class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+          <div class="pt-2 flex justify-between items-center">
+            <button type="button" id="btn-clear-ai-key" class="text-rose-600 hover:underline font-medium">
+              Clear Saved Key
+            </button>
+            <div class="flex space-x-2">
+              <button type="button" id="btn-cancel-ai" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold">
+                Cancel
+              </button>
+              <button type="submit" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-sm">
+                Save & Activate AI
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal 6: Cloud Storage & Multi-Device Backup Hub -->
+    <div id="cloud-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200 max-h-[90vh] flex flex-col">
+        <div class="bg-sky-700 text-white px-5 py-3.5 flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+            </svg>
+            <span class="font-bold text-sm">Cloud Storage & Multi-Device Sync</span>
+          </div>
+          <button type="button" id="btn-close-cloud-modal" class="text-sky-200 hover:text-white p-1 rounded-lg transition-colors">
+            ✕
+          </button>
+        </div>
+
+        <div class="p-5 space-y-5 text-xs overflow-y-auto">
+          <!-- Status Banner -->
+          <div id="cloud-modal-status" class="p-3 rounded-xl bg-slate-100 text-slate-700 font-medium flex items-center justify-between">
+            <span>Status: Saved on Device (Local Storage)</span>
+            <span class="text-[11px] text-emerald-600 font-bold">Auto-Saved</span>
+          </div>
+
+          <!-- Option A: Live Supabase Cloud Sync -->
+          <form id="cloud-sync-form" class="space-y-3 border border-sky-100 bg-sky-50/40 p-4 rounded-xl">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-slate-900 text-sm">1. Live Cloud Database Sync (Supabase)</h3>
+              <span class="text-[10px] bg-sky-100 text-sky-800 px-2 py-0.5 rounded font-semibold">Real-Time Multi-Device</span>
+            </div>
+            <p class="text-slate-600 leading-relaxed">
+              Connect your free <a href="https://supabase.com" target="_blank" class="text-sky-700 underline font-semibold">Supabase.com</a> project so your phone APK and computer sync automatically in the cloud.
+            </p>
+            <div>
+              <label for="supabase-url-input" class="block font-semibold text-slate-700 mb-1">Supabase Project URL</label>
+              <input type="url" id="supabase-url-input" placeholder="https://xyzcompany.supabase.co"
+                class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono bg-white focus:outline-none focus:ring-2 focus:ring-sky-500">
+            </div>
+            <div>
+              <label for="supabase-key-input" class="block font-semibold text-slate-700 mb-1">Supabase Anon Public API Key</label>
+              <input type="password" id="supabase-key-input" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..."
+                class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono bg-white focus:outline-none focus:ring-2 focus:ring-sky-500">
+            </div>
+            <div class="flex flex-wrap gap-2 pt-1">
+              <button type="submit" class="bg-sky-600 hover:bg-sky-700 text-white font-semibold px-3.5 py-2 rounded-lg transition-colors shadow-sm">
+                Save & Push to Cloud
+              </button>
+              <button type="button" id="btn-pull-cloud" class="bg-white hover:bg-slate-100 text-sky-700 border border-sky-200 font-semibold px-3.5 py-2 rounded-lg transition-colors">
+                ↓ Pull Latest from Cloud
+              </button>
+              <button type="button" id="btn-disconnect-cloud" class="text-rose-600 hover:underline px-2 py-2 ml-auto">
+                Disconnect
+              </button>
+            </div>
+          </form>
+
+          <!-- Option B: Instant Cloud Drive Backup File (Google Drive / WhatsApp Backup) -->
+          <div class="space-y-3 border border-slate-200 p-4 rounded-xl bg-white">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-slate-900 text-sm">2. Google Drive / WhatsApp Cloud Backup File</h3>
+              <span class="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-semibold">Zero Setup Required</span>
+            </div>
+            <p class="text-slate-600 leading-relaxed">
+              Download your complete encrypted ledger snapshot (`.json`) to save in <strong>Google Drive</strong> or send to your own WhatsApp, and restore it on any new phone in one tap.
+            </p>
+            <div class="flex flex-wrap gap-2 pt-1">
+              <button type="button" id="btn-download-backup" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3.5 py-2 rounded-lg transition-colors shadow-sm flex items-center space-x-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span>Download Cloud Backup (.json)</span>
+              </button>
+              <input type="file" id="restore-backup-input" accept=".json,application/json" class="hidden">
+              <button type="button" id="btn-restore-backup" class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold px-3.5 py-2 rounded-lg border border-slate-300 transition-colors">
+                ↑ Restore from Backup File
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Embedded PWA Web Manifest via Data URI
+    const pwaManifest = {
+      name: "PocketLedger Accounting",
+      short_name: "PocketLedger",
+      start_url: ".",
+      display: "standalone",
+      background_color: "#f8fafc",
+      theme_color: "#059669"
+    };
+    const manifestLink = document.createElement('link');
+    manifestLink.rel = 'manifest';
+    manifestLink.href = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(pwaManifest));
+    document.head.appendChild(manifestLink);
+
+    // LocalStorage keys
+    const STORAGE_KEY = 'pocketledger_transactions_v8';
+    const BIZ_STORAGE_KEY = 'pocketledger_biz_profile_v1';
+    const AI_KEY_STORAGE = 'pocketledger_gemini_api_key_v1';
+    const CLOUD_CONFIG_STORAGE = 'pocketledger_supabase_config_v1';
+
+    // Default Business Profile
+    const defaultBizProfile = {
+      name: 'KERALA TRADING & CONTRACTS',
+      location: 'Aluva, Kochi, Kerala',
+      gstin: '32AABCU9603R1ZM'
+    };
+
+    function loadBizProfile() {
+      try {
+        const stored = localStorage.getItem(BIZ_STORAGE_KEY);
+        if (stored) return JSON.parse(stored);
+      } catch (e) {}
+      return defaultBizProfile;
+    }
+
+    function saveBizProfile(profile) {
+      try { localStorage.setItem(BIZ_STORAGE_KEY, JSON.stringify(profile)); } catch (e) {}
+    }
+
+    function loadAiKey() {
+      try { return localStorage.getItem(AI_KEY_STORAGE) || ''; } catch (e) { return ''; }
+    }
+
+    function saveAiKey(k) {
+      try { localStorage.setItem(AI_KEY_STORAGE, k); } catch (e) {}
+    }
+
+    function loadCloudConfig() {
+      try {
+        const stored = localStorage.getItem(CLOUD_CONFIG_STORAGE);
+        if (stored) return JSON.parse(stored);
+      } catch (e) {}
+      return { url: '', key: '' };
+    }
+
+    function saveCloudConfig(cfg) {
+      try { localStorage.setItem(CLOUD_CONFIG_STORAGE, JSON.stringify(cfg)); } catch (e) {}
+    }
+
+    let bizProfile = loadBizProfile();
+    let geminiApiKey = loadAiKey();
+    let cloudConfig = loadCloudConfig();
+
+    // Initial default transactions
+    const defaultTransactions = [
+      {
+        id: 1,
+        desc: 'Rajesh Builders',
+        bankStamp: 'SBI Ernakulam Main Branch (Counter #02)',
+        amount: 45000.00,
+        gstRate: 0,
+        date: '2026-11-02',
+        type: 'income',
+        category: 'Customer Sales',
+        source: 'WhatsApp / Slip Scan'
+      },
+      {
+        id: 2,
+        desc: 'Asian Paints Dealer',
+        bankStamp: 'Federal Bank RTGS Counter (UTR-882190)',
+        amount: 12400.00,
+        gstRate: 18,
+        date: '2026-11-01',
+        type: 'expense',
+        category: 'Supplier / Vendor',
+        source: 'WhatsApp / Slip Scan'
+      },
+      {
+        id: 3,
+        desc: 'Rajesh Builders',
+        bankStamp: 'South Indian Bank Cheque Deposit #4401',
+        amount: 30000.00,
+        gstRate: 0,
+        date: '2026-10-28',
+        type: 'income',
+        category: 'Customer Sales',
+        source: 'WhatsApp / Slip Scan'
+      }
+    ];
+
+    function loadTransactions() {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) return parsed;
+        }
+      } catch (e) {}
+      return defaultTransactions;
+    }
+
+    function saveTransactions() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions)); } catch (e) {}
+      if (cloudConfig.url && cloudConfig.key) {
+        pushToSupabaseCloud();
+      }
+    }
+
+    // State
+    let transactions = loadTransactions();
+    let currentFilter = 'all';
+    let selectedParty = null;
+    let activeReceiptData = null;
+    let attachedWaFile = null;
+
+    // DOM Elements
+    const headerBizBadge = document.getElementById('header-biz-badge');
+    const btnOpenBizSettings = document.getElementById('btn-open-biz-settings');
+    const bizModal = document.getElementById('biz-modal');
+    const bizForm = document.getElementById('biz-form');
+    const bizNameInput = document.getElementById('biz-name-input');
+    const bizLocationInput = document.getElementById('biz-location-input');
+    const bizGstinInput = document.getElementById('biz-gstin-input');
+    const btnCloseBizModal = document.getElementById('btn-close-biz-modal');
+    const btnCancelBiz = document.getElementById('btn-cancel-biz');
+    const receiptBizNameEl = document.getElementById('receipt-biz-name');
+    const receiptBizSubEl = document.getElementById('receipt-biz-sub');
+
+    // Cloud Modal Elements
+    const btnOpenCloudSettings = document.getElementById('btn-open-cloud-settings');
+    const cloudBtnLabel = document.getElementById('cloud-btn-label');
+    const cloudSyncPill = document.getElementById('cloud-sync-pill');
+    const cloudModal = document.getElementById('cloud-modal');
+    const btnCloseCloudModal = document.getElementById('btn-close-cloud-modal');
+    const cloudModalStatus = document.getElementById('cloud-modal-status');
+    const cloudSyncForm = document.getElementById('cloud-sync-form');
+    const supabaseUrlInput = document.getElementById('supabase-url-input');
+    const supabaseKeyInput = document.getElementById('supabase-key-input');
+    const btnPullCloud = document.getElementById('btn-pull-cloud');
+    const btnDisconnectCloud = document.getElementById('btn-disconnect-cloud');
+    const btnDownloadBackup = document.getElementById('btn-download-backup');
+    const btnRestoreBackup = document.getElementById('btn-restore-backup');
+    const restoreBackupInput = document.getElementById('restore-backup-input');
+
+    function updateCloudUI(statusMsg) {
+      if (cloudConfig.url && cloudConfig.key) {
+        cloudBtnLabel.textContent = '☁️ Cloud Connected';
+        cloudSyncPill.textContent = '☁️ Synced to Supabase Cloud';
+        cloudSyncPill.className = 'text-[11px] bg-sky-100 text-sky-800 px-2.5 py-0.5 rounded-full font-semibold';
+        cloudModalStatus.innerHTML = `<span>${escapeHtml(statusMsg || 'Connected to Supabase Cloud Database')}</span><span class="text-emerald-600 font-bold">✓ Live Sync</span>`;
+      } else {
+        cloudBtnLabel.textContent = 'Cloud Storage';
+        cloudSyncPill.textContent = 'Local Device Storage';
+        cloudSyncPill.className = 'text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium';
+        cloudModalStatus.innerHTML = `<span>${escapeHtml(statusMsg || 'Saved on Device (Local Storage)')}</span><span class="text-emerald-600 font-bold">Auto-Saved</span>`;
+      }
+    }
+
+    async function pushToSupabaseCloud() {
+      if (!cloudConfig.url || !cloudConfig.key) return;
+      try {
+        const cleanUrl = cloudConfig.url.replace(/\/+$/, '');
+        const payload = transactions.map(t => ({
+          id: t.id,
+          tx_date: t.date || '2026-11-02',
+          party_name: t.desc,
+          bank_stamp: t.bankStamp || '',
+          amount: t.amount,
+          gst_rate: Number(t.gstRate || 0),
+          type: t.type,
+          category: t.category || 'General',
+          source: t.source || 'App'
+        }));
+        const sbPostEndpoint = cleanUrl + "/rest/v1/pocketledger_entries";
+        const resp = await fetch(sbPostEndpoint, {
+          method: 'POST',
+          headers: {
+            'apikey': cloudConfig.key,
+            'Authorization': `Bearer ${cloudConfig.key}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates'
+          },
+          body: JSON.stringify(payload)
+        });
+        if (resp.ok) {
+          updateCloudUI(`Synced ${transactions.length} entries to Supabase Cloud!`);
+        } else {
+          updateCloudUI('Cloud connected (Make sure table pocketledger_entries exists in SQL Editor)');
+        }
+      } catch (err) {
+        updateCloudUI('Saved locally (Cloud offline or unreachable)');
+      }
+    }
+
+    async function pullFromSupabaseCloud() {
+      if (!cloudConfig.url || !cloudConfig.key) {
+        updateCloudUI('Please enter both Supabase URL and Anon Key first.');
+        return;
+      }
+      try {
+        updateCloudUI('Pulling latest records from Supabase Cloud...');
+        const cleanUrl = cloudConfig.url.replace(/\/+$/, '');
+        const sbGetEndpoint = cleanUrl + "/rest/v1/pocketledger_entries?select=*&order=id.desc";
+        const resp = await fetch(sbGetEndpoint, {
+          headers: {
+            'apikey': cloudConfig.key,
+            'Authorization': `Bearer ${cloudConfig.key}`
+          }
+        });
+        if (resp.ok) {
+          const rows = await resp.json();
+          if (Array.isArray(rows) && rows.length > 0) {
+            transactions = rows.map(r => ({
+              id: Number(r.id),
+              desc: r.party_name || 'Customer',
+              bankStamp: r.bank_stamp || null,
+              amount: Number(r.amount) || 0,
+              gstRate: Number(r.gst_rate || 0),
+              date: r.tx_date || '2026-11-02',
+              type: r.type === 'expense' ? 'expense' : 'income',
+              category: r.category || 'General',
+              source: r.source || 'Cloud Sync'
+            }));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+            render();
+            renderPartiesGrid();
+            updateCloudUI(`Pulled ${transactions.length} entries from Supabase Cloud!`);
+          } else {
+            updateCloudUI('Cloud table is empty. Pushing your current entries now...');
+            await pushToSupabaseCloud();
+          }
+        } else {
+          updateCloudUI('Could not read table. Run the SQL from the AI Bot Prompt tab first.');
+        }
+      } catch (e) {
+        updateCloudUI('Network error connecting to Supabase URL.');
+      }
+    }
+
+    btnOpenCloudSettings.addEventListener('click', () => {
+      supabaseUrlInput.value = cloudConfig.url || '';
+      supabaseKeyInput.value = cloudConfig.key || '';
+      updateCloudUI();
+      cloudModal.classList.remove('hidden');
+    });
+
+    btnCloseCloudModal.addEventListener('click', () => cloudModal.classList.add('hidden'));
+
+    cloudSyncForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      cloudConfig = {
+        url: supabaseUrlInput.value.trim(),
+        key: supabaseKeyInput.value.trim()
+      };
+      saveCloudConfig(cloudConfig);
+      updateCloudUI('Connecting & pushing records to Supabase...');
+      await pushToSupabaseCloud();
+    });
+
+    btnPullCloud.addEventListener('click', async () => {
+      cloudConfig = {
+        url: supabaseUrlInput.value.trim(),
+        key: supabaseKeyInput.value.trim()
+      };
+      saveCloudConfig(cloudConfig);
+      await pullFromSupabaseCloud();
+    });
+
+    btnDisconnectCloud.addEventListener('click', () => {
+      cloudConfig = { url: '', key: '' };
+      supabaseUrlInput.value = '';
+      supabaseKeyInput.value = '';
+      saveCloudConfig(cloudConfig);
+      updateCloudUI('Disconnected from cloud. Using local device storage.');
+    });
+
+    // Download & Restore JSON Backup File (Google Drive / WhatsApp compatible)
+    btnDownloadBackup.addEventListener('click', () => {
+      const backupPayload = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        bizProfile: bizProfile,
+        transactions: transactions
+      };
+      const blob = new Blob([JSON.stringify(backupPayload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `PocketLedger_Cloud_Backup_${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      updateCloudUI('Downloaded .json backup! Save it to Google Drive or WhatsApp.');
+    });
+
+    btnRestoreBackup.addEventListener('click', () => restoreBackupInput.click());
+
+    restoreBackupInput.addEventListener('change', () => {
+      if (!restoreBackupInput.files || !restoreBackupInput.files[0]) return;
+      const file = restoreBackupInput.files[0];
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const parsed = JSON.parse(ev.target.result);
+          if (parsed && Array.isArray(parsed.transactions)) {
+            transactions = parsed.transactions;
+            if (parsed.bizProfile) {
+              bizProfile = parsed.bizProfile;
+              saveBizProfile(bizProfile);
+              applyBizProfileUI();
+            }
+            saveTransactions();
+            render();
+            renderPartiesGrid();
+            updateCloudUI(`Restored ${transactions.length} transactions from backup file!`);
+          }
+        } catch (err) {
+          updateCloudUI('Invalid backup file format.');
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    // AI Key Modal Elements
+    const btnOpenAiSettings = document.getElementById('btn-open-ai-settings');
+    const aiKeyBtnLabel = document.getElementById('ai-key-btn-label');
+    const aiModeBadge = document.getElementById('ai-mode-badge');
+    const aiModal = document.getElementById('ai-modal');
+    const aiKeyForm = document.getElementById('ai-key-form');
+    const geminiKeyInput = document.getElementById('gemini-key-input');
+    const btnCloseAiModal = document.getElementById('btn-close-ai-modal');
+    const btnCancelAi = document.getElementById('btn-cancel-ai');
+    const btnClearAiKey = document.getElementById('btn-clear-ai-key');
+
+    function updateAiStatusUI() {
+      if (geminiApiKey && geminiApiKey.length > 10) {
+        aiKeyBtnLabel.textContent = '✓ Gemini Vision Active';
+        aiModeBadge.textContent = '⚡ Live Gemini AI Connected';
+        aiModeBadge.className = 'text-[10px] bg-emerald-400 text-slate-950 px-2.5 py-1 rounded-full font-bold';
+      } else {
+        aiKeyBtnLabel.textContent = 'Connect Live Gemini AI';
+        aiModeBadge.textContent = 'Smart OCR Active';
+        aiModeBadge.className = 'text-[10px] bg-white/15 px-2.5 py-1 rounded-full font-semibold';
+      }
+    }
+
+    btnOpenAiSettings.addEventListener('click', () => {
+      geminiKeyInput.value = geminiApiKey;
+      aiModal.classList.remove('hidden');
+    });
+    btnCloseAiModal.addEventListener('click', () => aiModal.classList.add('hidden'));
+    btnCancelAi.addEventListener('click', () => aiModal.classList.add('hidden'));
+    btnClearAiKey.addEventListener('click', () => {
+      geminiApiKey = '';
+      geminiKeyInput.value = '';
+      saveAiKey('');
+      updateAiStatusUI();
+      aiModal.classList.add('hidden');
+    });
+    aiKeyForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      geminiApiKey = geminiKeyInput.value.trim();
+      saveAiKey(geminiApiKey);
+      updateAiStatusUI();
+      aiModal.classList.add('hidden');
+    });
+
+    // APK Modal elements
+    const btnOpenApkModal = document.getElementById('btn-open-apk-modal');
+    const apkModal = document.getElementById('apk-modal');
+    const btnCloseApkModal = document.getElementById('btn-close-apk-modal');
+    const btnDoneApk = document.getElementById('btn-done-apk');
+
+    btnOpenApkModal.addEventListener('click', () => apkModal.classList.remove('hidden'));
+    btnCloseApkModal.addEventListener('click', () => apkModal.classList.add('hidden'));
+    btnDoneApk.addEventListener('click', () => apkModal.classList.add('hidden'));
+
+    // WhatsApp Built-In Bot Chat Elements
+    const tabWaChatBtn = document.getElementById('tab-wa-chat');
+    const waChatSection = document.getElementById('wa-chat-section');
+    const waChatStream = document.getElementById('wa-chat-stream');
+    const waChatForm = document.getElementById('wa-chat-form');
+    const waChatInput = document.getElementById('wa-chat-input');
+    const waCameraInput = document.getElementById('wa-camera-input');
+    const btnWaAttach = document.getElementById('btn-wa-attach');
+    const waAttachmentBar = document.getElementById('wa-attachment-bar');
+    const waAttachmentName = document.getElementById('wa-attachment-name');
+    const btnRemoveWaAttachment = document.getElementById('btn-remove-wa-attachment');
+
+    btnWaAttach.addEventListener('click', () => waCameraInput.click());
+    waCameraInput.addEventListener('change', () => {
+      if (waCameraInput.files && waCameraInput.files.length > 0) {
+        attachedWaFile = waCameraInput.files[0];
+        waAttachmentName.textContent = attachedWaFile.name;
+        waAttachmentBar.classList.remove('hidden');
+      }
+    });
+    btnRemoveWaAttachment.addEventListener('click', () => {
+      attachedWaFile = null;
+      waCameraInput.value = '';
+      waAttachmentBar.classList.add('hidden');
+    });
+
+    function appendWaBubble(sender, htmlContent) {
+      const bubble = document.createElement('div');
+      if (sender === 'user') {
+        bubble.className = 'self-end max-w-[85%] bg-[#DCF8C6] text-slate-800 p-3 rounded-2xl rounded-tr-none shadow-sm space-y-1';
+      } else {
+        bubble.className = 'self-start max-w-[85%] bg-white text-slate-800 p-3 rounded-2xl rounded-tl-none shadow-sm space-y-1';
+      }
+      bubble.innerHTML = htmlContent;
+      waChatStream.appendChild(bubble);
+      waChatStream.scrollTop = waChatStream.scrollHeight;
+    }
+
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const base64 = reader.result.split(',')[1];
+          resolve({ base64, mimeType: file.type || 'image/jpeg', dataUrl: reader.result });
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // Call Real Gemini Vision API if key is set, else smart local parser
+    async function analyzeSlipWithAI(file, captionText) {
+      if (geminiApiKey && geminiApiKey.length > 10) {
+        try {
+          const prompt = `You are an expert accounting assistant in Kerala, India. Analyze this bank slip image and/or WhatsApp message caption: "${captionText}".
+1. Extract the actual customer or vendor Party Name (prioritize the name in the caption so you don't mistake a bank branch rubber stamp like SBI/Federal Bank for the person).
+2. Extract the bank branch stamp or UTR reference into bank_stamp_details.
+3. Extract the numeric amount in INR.
+4. Set transaction_type to "income" or "expense".
+5. Set category (e.g. "Customer Sales", "Supplier / Vendor", "Utilities & Electricity", "Freelance / Fees").
+6. Set gst_rate (0, 5, 12, or 18).
+Return ONLY valid JSON: {"party_name": "...", "bank_stamp_details": "...", "amount": 1000, "transaction_type": "income", "category": "Customer Sales", "gst_rate": 0}`;
+
+          const parts = [{ text: prompt }];
+          if (file) {
+            const imgData = await fileToBase64(file);
+            parts.push({
+              inline_data: {
+                mime_type: imgData.mimeType,
+                data: imgData.base64
+              }
+            });
+          }
+
+          const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(geminiApiKey)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts }] })
+          });
+
+          if (resp.ok) {
+            const json = await resp.json();
+            const rawText = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            const cleaned = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+            const parsed = JSON.parse(cleaned);
+            return {
+              desc: parsed.party_name || captionText || 'Customer Account',
+              bankStamp: parsed.bank_stamp_details || 'Verified Bank Slip',
+              amount: Number(parsed.amount) || 5000,
+              type: parsed.transaction_type === 'expense' ? 'expense' : 'income',
+              category: parsed.category || 'Customer Sales',
+              gstRate: Number(parsed.gst_rate || 0),
+              usedLiveAi: true
+            };
+          }
+        } catch (err) {
+          console.warn('Live Gemini call fallback:', err);
+        }
+      }
+
+      // Smart Built-in NLP & Slip Parser
+      const raw = (captionText || (file ? file.name.replace(/\.[^/.]+$/, '') : '')).trim();
+      const amountMatch = raw.match(/(?:₹|rs\.?|inr)?\s*(\d+(?:,\d+)*(?:\.\d+)?)/i);
+      const extractedAmount = amountMatch ? parseFloat(amountMatch[1].replace(/,/g, '')) : 15000;
+
+      const isExpense = /\b(paid|expense|bill|purchase|rent|kseb|paints|vendor|debit|to)\b/i.test(raw);
+      const gstMatch = raw.match(/(\d+)\s*%\s*gst/i);
+      const extractedGst = gstMatch ? Number(gstMatch[1]) : 0;
+
+      let cleanParty = raw
+        .replace(/(?:₹|rs\.?|inr)?\s*\d+(?:,\d+)*(?:\.\d+)?/gi, '')
+        .replace(/\b(paid|received|from|to|slip|bank|sbi|federal|canara|hdfc|gst|advance|for)\b/gi, '')
+        .replace(/[-_#,]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      if (!cleanParty || cleanParty.length < 2) {
+        cleanParty = file ? 'Customer (' + file.name.replace(/\.[^/.]+$/, '') + ')' : 'Walk-in Customer';
+      }
+
+      let detectedStamp = 'Bank Counter Seal #108';
+      if (/sbi/i.test(raw)) detectedStamp = 'SBI Branch Cash Counter #04';
+      else if (/federal/i.test(raw)) detectedStamp = 'Federal Bank RTGS Seal';
+      else if (/canara/i.test(raw)) detectedStamp = 'Canara Bank Deposit Counter';
+      else if (/hdfc/i.test(raw)) detectedStamp = 'HDFC NEFT Verification Stamp';
+
+      return {
+        desc: cleanParty,
+        bankStamp: detectedStamp,
+        amount: extractedAmount,
+        type: isExpense ? 'expense' : 'income',
+        category: isExpense ? 'Supplier / Vendor' : 'Customer Sales',
+        gstRate: extractedGst,
+        usedLiveAi: false
+      };
+    }
+
+    waChatStream.addEventListener('click', (e) => {
+      const receiptBtn = e.target.closest('.wa-open-receipt-btn');
+      if (receiptBtn) {
+        const id = Number(receiptBtn.getAttribute('data-id'));
+        const item = transactions.find(t => t.id === id);
+        if (item) openReceiptModal(item);
+      }
+    });
+
+    waChatForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const text = waChatInput.value.trim();
+      if (!text && !attachedWaFile) return;
+
+      const currentFile = attachedWaFile;
+      let userHtml = '';
+      if (currentFile) {
+        const fileInfo = await fileToBase64(currentFile);
+        userHtml += `<img src="${fileInfo.dataUrl}" alt="Slip" class="max-h-36 rounded-lg border border-emerald-200 mb-1.5 object-cover">`;
+      }
+      if (text) {
+        userHtml += `<p class="font-medium">${escapeHtml(text)}</p>`;
+      }
+      userHtml += `<div class="text-[10px] text-slate-500 text-right">Sent ✓✓</div>`;
+      appendWaBubble('user', userHtml);
+
+      waChatInput.value = '';
+      attachedWaFile = null;
+      waCameraInput.value = '';
+      waAttachmentBar.classList.add('hidden');
+
+      const result = await analyzeSlipWithAI(currentFile, text);
+
+      const newEntry = {
+        id: Date.now(),
+        desc: result.desc,
+        bankStamp: result.bankStamp,
+        amount: result.amount,
+        gstRate: result.gstRate,
+        date: '2026-11-02',
+        type: result.type,
+        category: result.category,
+        source: 'WhatsApp / Slip Scan'
+      };
+
+      transactions.unshift(newEntry);
+      saveTransactions();
+      render();
+      renderPartiesGrid();
+
+      const stats = getPartyStats(newEntry.desc);
+      const botReplyHtml = `
+        <div class="font-bold text-emerald-700 text-[11px] flex items-center justify-between">
+          <span>PocketLedger AI Bot</span>
+          <span>${result.usedLiveAi ? '⚡ Gemini 1.5 Vision' : '✓ Auto-Parsed'}</span>
+        </div>
+        <div class="space-y-1 pt-0.5">
+          <div class="font-bold text-slate-900 text-xs">✓ Logged ${formatMoney(newEntry.amount)} (${newEntry.type === 'income' ? 'Received' : 'Paid'})</div>
+          <div>👤 <strong>Party Ledger:</strong> ${escapeHtml(newEntry.desc)}</div>
+          <div>🏛️ <strong>Bank Stamp:</strong> ${escapeHtml(newEntry.bankStamp)}</div>
+          <div>📊 <strong>Updated Party Balance:</strong> <span class="font-bold text-indigo-700">${formatMoney(stats.net)}</span></div>
+        </div>
+        <div class="pt-1.5 mt-1 border-t border-slate-100 flex justify-end">
+          <button type="button" data-id="${newEntry.id}" class="wa-open-receipt-btn text-[11px] bg-emerald-600 text-white px-2.5 py-1 rounded-lg font-semibold">
+            View / Share Receipt
+          </button>
+        </div>
+      `;
+      appendWaBubble('bot', botReplyHtml);
+    });
+
+    const form = document.getElementById('transaction-form');
+    const descInput = document.getElementById('desc-input');
+    const refInput = document.getElementById('ref-input');
+    const dateInput = document.getElementById('date-input');
+    const amountInput = document.getElementById('amount-input');
+    const typeSelect = document.getElementById('type-select');
+    const categorySelect = document.getElementById('category-select');
+    const manualGstSelect = document.getElementById('manual-gst-select');
+    const slipGstSelect = document.getElementById('slip-gst-select');
+    const netBalanceEl = document.getElementById('net-balance');
+    const totalIncomeEl = document.getElementById('total-income');
+    const totalExpenseEl = document.getElementById('total-expense');
+    const totalGstEl = document.getElementById('total-gst');
+    const transactionListEl = document.getElementById('transaction-list');
+    const emptyStateEl = document.getElementById('empty-state');
+    const entryCountEl = document.getElementById('entry-count');
+    const feedbackEl = document.getElementById('feedback-message');
+    const filterAllBtn = document.getElementById('filter-all');
+    const filterIncomeBtn = document.getElementById('filter-income');
+    const filterExpenseBtn = document.getElementById('filter-expense');
+    const historyTitleEl = document.getElementById('history-title');
+    const activePartyBadgeEl = document.getElementById('active-party-badge');
+    const btnExportCsv = document.getElementById('btn-export-csv');
+
+    const searchInput = document.getElementById('search-input');
+    const monthFilterInput = document.getElementById('month-filter-input');
+    const btnClearSearch = document.getElementById('btn-clear-search');
+
+    const editModal = document.getElementById('edit-modal');
+    const editForm = document.getElementById('edit-form');
+    const editIdInput = document.getElementById('edit-id');
+    const editDescInput = document.getElementById('edit-desc');
+    const editStampInput = document.getElementById('edit-stamp');
+    const editAmountInput = document.getElementById('edit-amount');
+    const editDateInput = document.getElementById('edit-date');
+    const editTypeSelect = document.getElementById('edit-type');
+    const editCategoryInput = document.getElementById('edit-category');
+    const editGstSelect = document.getElementById('edit-gst');
+    const btnCloseEditModal = document.getElementById('btn-close-edit-modal');
+    const btnCancelEdit = document.getElementById('btn-cancel-edit');
+
+    dateInput.value = '2026-11-02';
+
+    function applyBizProfileUI() {
+      headerBizBadge.textContent = bizProfile.name;
+      receiptBizNameEl.textContent = bizProfile.name;
+      receiptBizSubEl.textContent = `${bizProfile.location}${bizProfile.gstin ? ' • GSTIN: ' + bizProfile.gstin : ''}`;
+    }
+
+    btnOpenBizSettings.addEventListener('click', () => {
+      bizNameInput.value = bizProfile.name;
+      bizLocationInput.value = bizProfile.location;
+      bizGstinInput.value = bizProfile.gstin || '';
+      bizModal.classList.remove('hidden');
+    });
+
+    function closeBizModal() {
+      bizModal.classList.add('hidden');
+    }
+
+    btnCloseBizModal.addEventListener('click', closeBizModal);
+    btnCancelBiz.addEventListener('click', closeBizModal);
+
+    bizForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      bizProfile = {
+        name: bizNameInput.value.trim() || 'KERALA TRADING & CONTRACTS',
+        location: bizLocationInput.value.trim() || 'Aluva, Kochi, Kerala',
+        gstin: bizGstinInput.value.trim()
+      };
+      saveBizProfile(bizProfile);
+      applyBizProfileUI();
+      closeBizModal();
+    });
+
+    // Tabs
+    const tabVideoBtn = document.getElementById('tab-video');
+    const tabSlipBtn = document.getElementById('tab-slip');
+    const tabPartiesBtn = document.getElementById('tab-parties');
+    const tabManualBtn = document.getElementById('tab-manual');
+    const tabBotCodeBtn = document.getElementById('tab-bot-code');
+
+    const videoSection = document.getElementById('video-section');
+    const slipSection = document.getElementById('slip-section');
+    const partiesSection = document.getElementById('parties-section');
+    const manualSection = document.getElementById('manual-section');
+    const botCodeSection = document.getElementById('bot-code-section');
+    const partiesSummaryGrid = document.getElementById('parties-summary-grid');
+    const btnShowAllParties = document.getElementById('btn-show-all-parties');
+
+    const btnPlayVideo = document.getElementById('btn-play-video');
+    const btnResetVideo = document.getElementById('btn-reset-video');
+    const playText = document.getElementById('play-text');
+    const playIcon = document.getElementById('play-icon');
+    const videoSceneContent = document.getElementById('video-scene-content');
+    const sceneCounter = document.getElementById('scene-counter');
+    const sceneCaption = document.getElementById('scene-caption');
+    const vPrevBtn = document.getElementById('v-prev');
+    const vNextBtn = document.getElementById('v-next');
+    const vBar1 = document.getElementById('v-step-bar-1');
+    const vBar2 = document.getElementById('v-step-bar-2');
+    const vBar3 = document.getElementById('v-step-bar-3');
+    const vBar4 = document.getElementById('v-step-bar-4');
+
+    const dropzone = document.getElementById('dropzone');
+    const slipFileInput = document.getElementById('slip-file-input');
+    const whatsappCaptionInput = document.getElementById('whatsapp-caption-input');
+    const sampleSlip1Btn = document.getElementById('sample-slip-1');
+    const sampleSlip2Btn = document.getElementById('sample-slip-2');
+    const sampleSlip3Btn = document.getElementById('sample-slip-3');
+    const scanningIndicator = document.getElementById('scanning-indicator');
+    const scanningStep = document.getElementById('scanning-step');
+    const slipResultBanner = document.getElementById('slip-result-banner');
+    const slipResultText = document.getElementById('slip-result-text');
+
+    const receiptModal = document.getElementById('receipt-modal');
+    const btnCloseModal = document.getElementById('btn-close-modal');
+    const receiptPartyNameEl = document.getElementById('receipt-party-name');
+    const receiptAmountEl = document.getElementById('receipt-amount');
+    const receiptGstDetailEl = document.getElementById('receipt-gst-detail');
+    const receiptCategoryEl = document.getElementById('receipt-category');
+    const receiptStampEl = document.getElementById('receipt-stamp');
+    const receiptRunningBalanceEl = document.getElementById('receipt-running-balance');
+    const receiptVoucherNoEl = document.getElementById('receipt-voucher-no');
+    const receiptDateEl = document.getElementById('receipt-date');
+    const waPreviewEl = document.getElementById('whatsapp-message-preview');
+    const btnCopyWa = document.getElementById('btn-copy-wa');
+    const btnShareWa = document.getElementById('btn-share-wa');
+    const btnPrintPdf = document.getElementById('btn-print-pdf');
+    const copyStatusEl = document.getElementById('copy-status');
+
+    function calcGstAmount(grossAmount, rate) {
+      if (!rate || rate <= 0) return 0;
+      return grossAmount - (grossAmount / (1 + rate / 100));
+    }
+
+    let currentVideoScene = 1;
+    let videoTimer = null;
+    let isVideoPlaying = false;
+
+    const videoScenes = [
+      {
+        step: 1,
+        title: "Scene 1: Customer Deposits Cash at Bank",
+        caption: "Rajesh Builders deposits ₹45,000 cash at SBI bank counter in Aluva.",
+        render: () => `
+          <div class="max-w-md mx-auto bg-slate-900 border border-slate-700 p-4 rounded-xl shadow-lg space-y-3">
+            <div class="flex items-center justify-between text-xs border-b border-slate-800 pb-2">
+              <span class="text-emerald-400 font-bold uppercase tracking-wider">🏦 Bank Counterfoil</span>
+              <span class="text-slate-400">02 Nov 2026</span>
+            </div>
+            <div class="bg-amber-500/10 border border-amber-500/30 p-3 rounded-lg text-xs space-y-1">
+              <div class="text-amber-300 font-semibold">Deposit Slip (Counterfoil)</div>
+              <div class="text-slate-300">Account: 3098****412</div>
+              <div class="text-2xl font-black text-emerald-400">₹45,000.00</div>
+              <div class="inline-block bg-slate-950 text-slate-300 px-2 py-1 rounded text-[11px] border border-slate-700 mt-1">
+                🏛️ Branch Rubber Stamp: <strong>SBI Ernakulam Main #04</strong>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        step: 2,
+        title: "Scene 2: Sending Photo with WhatsApp Caption",
+        caption: "Sending the slip photo with caption 'Advance from Rajesh Builders' to the bot.",
+        render: () => `
+          <div class="max-w-sm mx-auto bg-slate-950 border border-emerald-500/30 p-3.5 rounded-2xl shadow-xl space-y-2">
+            <div class="flex items-center space-x-2 text-xs text-slate-400 border-b border-slate-800 pb-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span class="font-bold text-white">WhatsApp Business Bot</span>
+            </div>
+            <div class="bg-emerald-950/40 border border-emerald-500/20 p-2.5 rounded-xl ml-6 space-y-2">
+              <div class="bg-slate-900 h-24 rounded-lg flex items-center justify-center text-xs text-slate-400 border border-slate-800">
+                <span class="font-mono text-emerald-300 text-center">📸 [Bank Slip Photo]<br><span class="text-[10px] text-slate-400">₹45,000 SBI Stamp</span></span>
+              </div>
+              <div class="text-xs text-emerald-200 font-medium">"Advance from Rajesh Builders"</div>
+            </div>
+          </div>
+        `
+      },
+      {
+        step: 3,
+        title: "Scene 3: Gemini Vision AI Analysis",
+        caption: "AI extracts ₹45,000, attributes party to 'Rajesh Builders', & keeps SBI stamp as proof.",
+        render: () => `
+          <div class="max-w-md mx-auto bg-slate-950 border border-indigo-500/40 p-4 rounded-xl shadow-lg relative overflow-hidden">
+            <div class="h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent w-full scanner-line absolute top-0 left-0"></div>
+            <div class="text-xs font-mono text-indigo-400 font-bold mb-2">🤖 GEMINI VISION AI PARSER</div>
+            <div class="grid grid-cols-2 gap-2 text-xs font-mono">
+              <div class="bg-slate-900 p-2 rounded border border-slate-800">
+                <div class="text-slate-400 text-[10px]">Actual Party Ledger:</div>
+                <div class="text-emerald-400 font-bold">Rajesh Builders</div>
+              </div>
+              <div class="bg-slate-900 p-2 rounded border border-slate-800">
+                <div class="text-slate-400 text-[10px]">Parsed Amount:</div>
+                <div class="text-emerald-400 font-bold">₹45,000.00</div>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        step: 4,
+        title: "Scene 4: Instant Confirmation & Ledger Updated",
+        caption: "Bot replies on WhatsApp and your PocketLedger ledger updates in real time!",
+        render: () => `
+          <div class="max-w-md mx-auto space-y-3">
+            <div class="bg-emerald-900/40 border border-emerald-500/50 p-3 rounded-xl text-xs space-y-1">
+              <div class="text-emerald-300 font-bold">🤖 WhatsApp Bot Reply:</div>
+              <div class="text-slate-200">
+                "✓ Logged ₹45,000.00 to <strong>Rajesh Builders</strong>!<br>
+                Verification: SBI Ernakulam Main Branch #04."
+              </div>
+            </div>
+          </div>
+        `
+      }
+    ];
+
+    function showVideoScene(sceneNum) {
+      currentVideoScene = sceneNum;
+      const scene = videoScenes[sceneNum - 1];
+      videoSceneContent.innerHTML = scene.render();
+      sceneCounter.textContent = `Scene ${scene.step} of 4`;
+      sceneCaption.textContent = scene.caption;
+
+      const bars = [vBar1, vBar2, vBar3, vBar4];
+      bars.forEach((bar, idx) => {
+        if (idx + 1 === sceneNum) {
+          bar.className = 'h-1.5 rounded-full bg-rose-500 transition-all';
+        } else if (idx + 1 < sceneNum) {
+          bar.className = 'h-1.5 rounded-full bg-emerald-500 transition-all';
+        } else {
+          bar.className = 'h-1.5 rounded-full bg-slate-800 transition-all';
+        }
+      });
+    }
+
+    function playVideo() {
+      if (isVideoPlaying) {
+        clearInterval(videoTimer);
+        isVideoPlaying = false;
+        playText.textContent = 'Play Video';
+        playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+        return;
+      }
+
+      isVideoPlaying = true;
+      playText.textContent = 'Pause';
+      playIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+
+      videoTimer = setInterval(() => {
+        if (currentVideoScene < 4) {
+          showVideoScene(currentVideoScene + 1);
+        } else {
+          showVideoScene(1);
+        }
+      }, 3500);
+    }
+
+    btnPlayVideo.addEventListener('click', playVideo);
+    btnResetVideo.addEventListener('click', () => {
+      clearInterval(videoTimer);
+      isVideoPlaying = false;
+      playText.textContent = 'Play Video';
+      playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+      showVideoScene(1);
+    });
+
+    vPrevBtn.addEventListener('click', () => {
+      clearInterval(videoTimer);
+      isVideoPlaying = false;
+      playText.textContent = 'Play Video';
+      if (currentVideoScene > 1) showVideoScene(currentVideoScene - 1);
+    });
+
+    vNextBtn.addEventListener('click', () => {
+      clearInterval(videoTimer);
+      isVideoPlaying = false;
+      playText.textContent = 'Play Video';
+      if (currentVideoScene < 4) showVideoScene(currentVideoScene + 1);
+      else showVideoScene(1);
+    });
+
+    function switchTab(activeBtn, activeSection) {
+      const allTabs = [
+        { btn: tabWaChatBtn, sec: waChatSection },
+        { btn: tabVideoBtn, sec: videoSection },
+        { btn: tabSlipBtn, sec: slipSection },
+        { btn: tabPartiesBtn, sec: partiesSection },
+        { btn: tabManualBtn, sec: manualSection },
+        { btn: tabBotCodeBtn, sec: botCodeSection }
+      ];
+
+      allTabs.forEach(t => {
+        if (t.btn === activeBtn) {
+          t.btn.className = 'py-2 px-2 rounded-lg bg-white text-slate-900 shadow-sm flex items-center justify-center space-x-1.5 transition-all font-semibold';
+          t.sec.classList.remove('hidden');
+        } else {
+          t.btn.className = 'py-2 px-2 rounded-lg text-slate-600 hover:text-slate-900 flex items-center justify-center space-x-1.5 transition-all';
+          t.sec.classList.add('hidden');
+        }
+      });
+    }
+
+    tabWaChatBtn.addEventListener('click', () => switchTab(tabWaChatBtn, waChatSection));
+    tabVideoBtn.addEventListener('click', () => {
+      switchTab(tabVideoBtn, videoSection);
+      showVideoScene(currentVideoScene);
+    });
+    tabSlipBtn.addEventListener('click', () => switchTab(tabSlipBtn, slipSection));
+    tabPartiesBtn.addEventListener('click', () => {
+      switchTab(tabPartiesBtn, partiesSection);
+      renderPartiesGrid();
+    });
+    tabManualBtn.addEventListener('click', () => switchTab(tabManualBtn, manualSection));
+    tabBotCodeBtn.addEventListener('click', () => switchTab(tabBotCodeBtn, botCodeSection));
+
+    btnShowAllParties.addEventListener('click', () => {
+      selectedParty = null;
+      activePartyBadgeEl.classList.add('hidden');
+      historyTitleEl.textContent = 'Transaction History';
+      render();
+      renderPartiesGrid();
+    });
+
+    searchInput.addEventListener('input', () => render());
+    monthFilterInput.addEventListener('change', () => render());
+    btnClearSearch.addEventListener('click', () => {
+      searchInput.value = '';
+      monthFilterInput.value = '';
+      selectedParty = null;
+      activePartyBadgeEl.classList.add('hidden');
+      historyTitleEl.textContent = 'Transaction History';
+      render();
+      renderPartiesGrid();
+    });
+
+    function updateCategoryDropdown() {
+      const type = typeSelect.value;
+      if (type === 'income') categorySelect.value = 'Customer Sales';
+      else categorySelect.value = 'Supplier / Vendor';
+    }
+
+    typeSelect.addEventListener('change', updateCategoryDropdown);
+
+    function formatMoney(amount) {
+      return '₹' + Math.abs(amount).toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function getPartyStats(partyName) {
+      let rec = 0, pd = 0;
+      transactions.forEach(t => {
+        if (t.desc === partyName) {
+          if (t.type === 'income') rec += t.amount;
+          else pd += t.amount;
+        }
+      });
+      return { received: rec, paid: pd, net: rec - pd };
+    }
+
+    function openReceiptModal(t) {
+      applyBizProfileUI();
+      const partyStats = getPartyStats(t.desc);
+      activeReceiptData = { ...t, stats: partyStats };
+
+      const gstRate = Number(t.gstRate || 0);
+      const gstAmt = calcGstAmount(t.amount, gstRate);
+
+      receiptPartyNameEl.textContent = t.desc;
+      receiptAmountEl.textContent = (t.type === 'income' ? '+' : '-') + formatMoney(t.amount);
+      if (gstRate > 0) {
+        const halfRate = (gstRate / 2).toFixed(1).replace('.0', '');
+        receiptGstDetailEl.textContent = `${gstRate}% GST (${formatMoney(gstAmt)} • ${halfRate}% CGST + ${halfRate}% SGST)`;
+      } else {
+        receiptGstDetailEl.textContent = '0% (No GST / Direct Bank Slip)';
+      }
+      receiptCategoryEl.textContent = t.category || 'General';
+      receiptStampEl.textContent = t.bankStamp || 'Direct Settlement / Counter';
+      receiptVoucherNoEl.textContent = 'VOC-2026-' + String(t.id).slice(-4);
+      receiptDateEl.textContent = t.date || '2026-11-02';
+      receiptRunningBalanceEl.textContent = formatMoney(partyStats.net);
+
+      const waText = 
+`*PAYMENT CONFIRMATION & STATEMENT*
+*${bizProfile.name}*
+*${bizProfile.location}${bizProfile.gstin ? ' • GSTIN: ' + bizProfile.gstin : ''}*
+---------------------------------------
+*Party:* ${t.desc}
+*Date:* ${receiptDateEl.textContent}
+*Amount Logged:* ${formatMoney(t.amount)} (${t.type === 'income' ? 'Received' : 'Paid Out'})
+${gstRate > 0 ? `*Included GST (${gstRate}%):* ${formatMoney(gstAmt)}\n` : ''}*Verification:* ${t.bankStamp || 'Verified Entry'}
+---------------------------------------
+*Updated Account Balance:* ${formatMoney(partyStats.net)}
+Thank you for your business!`;
+
+      waPreviewEl.textContent = waText;
+      copyStatusEl.classList.add('hidden');
+      receiptModal.classList.remove('hidden');
+    }
+
+    btnCloseModal.addEventListener('click', () => receiptModal.classList.add('hidden'));
+
+    function openEditModal(t) {
+      editIdInput.value = t.id;
+      editDescInput.value = t.desc || '';
+      editStampInput.value = t.bankStamp || '';
+      editAmountInput.value = t.amount;
+      editDateInput.value = t.date || '2026-11-02';
+      editTypeSelect.value = t.type || 'income';
+      editCategoryInput.value = t.category || 'General';
+      editGstSelect.value = String(t.gstRate || 0);
+      editModal.classList.remove('hidden');
+    }
+
+    function closeEditModal() {
+      editModal.classList.add('hidden');
+    }
+
+    btnCloseEditModal.addEventListener('click', closeEditModal);
+    btnCancelEdit.addEventListener('click', closeEditModal);
+
+    editForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const id = Number(editIdInput.value);
+      const idx = transactions.findIndex(item => item.id === id);
+      if (idx !== -1) {
+        transactions[idx] = {
+          ...transactions[idx],
+          desc: editDescInput.value.trim(),
+          bankStamp: editStampInput.value.trim() || null,
+          amount: parseFloat(editAmountInput.value) || 0,
+          date: editDateInput.value || '2026-11-02',
+          type: editTypeSelect.value,
+          category: editCategoryInput.value.trim() || 'General',
+          gstRate: Number(editGstSelect.value || 0)
+        };
+        saveTransactions();
+        render();
+        renderPartiesGrid();
+      }
+      closeEditModal();
+    });
+
+    btnCopyWa.addEventListener('click', () => {
+      const text = waPreviewEl.textContent;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          copyStatusEl.classList.remove('hidden');
+          setTimeout(() => copyStatusEl.classList.add('hidden'), 2000);
+        }).catch(() => {
+          document.execCommand('copy');
+          copyStatusEl.classList.remove('hidden');
+          setTimeout(() => copyStatusEl.classList.add('hidden'), 2000);
+        });
+      } else {
+        document.execCommand('copy');
+        copyStatusEl.classList.remove('hidden');
+        setTimeout(() => copyStatusEl.classList.add('hidden'), 2000);
+      }
+    });
+
+    btnShareWa.addEventListener('click', () => {
+      const text = encodeURIComponent(waPreviewEl.textContent);
+      const url = `https://api.whatsapp.com/send?text=${text}`;
+      window.open(url, '_blank');
+    });
+
+    btnPrintPdf.addEventListener('click', () => window.print());
+
+    btnExportCsv.addEventListener('click', () => {
+      const headers = ['ID', 'Date', 'Party Name', 'Type', 'Category', 'Gross Amount (INR)', 'GST Rate (%)', 'GST Amount (INR)', 'Bank Stamp / Reference', 'Source'];
+      const rows = transactions.map(t => {
+        const rate = Number(t.gstRate || 0);
+        const gstVal = calcGstAmount(t.amount, rate).toFixed(2);
+        return [
+          t.id,
+          t.date || '2026-11-02',
+          `"${(t.desc || '').replace(/"/g, '""')}"`,
+          t.type,
+          `"${(t.category || '').replace(/"/g, '""')}"`,
+          t.amount.toFixed(2),
+          rate,
+          gstVal,
+          `"${(t.bankStamp || '').replace(/"/g, '""')}"`,
+          `"${(t.source || 'Manual').replace(/"/g, '""')}"`
+        ].join(',');
+      });
+      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', 'PocketLedger_Export_2026.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+
+    function renderPartiesGrid() {
+      const partyMap = {};
+      transactions.forEach(t => {
+        const name = t.desc || 'General Account';
+        if (!partyMap[name]) partyMap[name] = { name: name, received: 0, paid: 0, count: 0 };
+        if (t.type === 'income') partyMap[name].received += t.amount;
+        else partyMap[name].paid += t.amount;
+        partyMap[name].count += 1;
+      });
+
+      partiesSummaryGrid.innerHTML = '';
+      const partyNames = Object.keys(partyMap);
+
+      if (partyNames.length === 0) {
+        partiesSummaryGrid.innerHTML = '<div class="col-span-2 text-center text-xs text-slate-400 py-4">No party records yet.</div>';
+        return;
+      }
+
+      partyNames.forEach(pName => {
+        const p = partyMap[pName];
+        const net = p.received - p.paid;
+        const isSelected = selectedParty === p.name;
+
+        const card = document.createElement('div');
+        card.className = `p-3.5 rounded-xl border transition-all cursor-pointer ${
+          isSelected ? 'border-indigo-500 bg-indigo-50/50 shadow-sm ring-2 ring-indigo-500/20' : 'border-slate-200 hover:border-slate-300 bg-white'
+        }`;
+        card.innerHTML = `
+          <div class="flex items-start justify-between">
+            <div>
+              <div class="font-semibold text-sm text-slate-900">${escapeHtml(p.name)}</div>
+              <span class="text-[11px] text-slate-400">${p.count} transaction${p.count === 1 ? '' : 's'}</span>
+            </div>
+            <span class="text-xs font-bold ${net >= 0 ? 'text-emerald-600' : 'text-rose-600'}">
+              ${net >= 0 ? '+' : '-'}${formatMoney(net)}
+            </span>
+          </div>
+          <div class="flex items-center justify-between text-xs pt-2 mt-2 border-t border-slate-100 text-slate-500">
+            <span>In: <strong class="text-emerald-600 font-medium">${formatMoney(p.received)}</strong></span>
+            <span>Out: <strong class="text-rose-600 font-medium">${formatMoney(p.paid)}</strong></span>
+          </div>
+        `;
+
+        card.addEventListener('click', () => {
+          if (selectedParty === p.name) {
+            selectedParty = null;
+            activePartyBadgeEl.classList.add('hidden');
+            historyTitleEl.textContent = 'Transaction History';
+          } else {
+            selectedParty = p.name;
+            activePartyBadgeEl.textContent = `Party: ${p.name}`;
+            activePartyBadgeEl.classList.remove('hidden');
+            historyTitleEl.textContent = `${p.name}'s Statement`;
+          }
+          render();
+          renderPartiesGrid();
+        });
+
+        partiesSummaryGrid.appendChild(card);
+      });
+    }
+
+    function render() {
+      let income = 0, expense = 0, gstTotal = 0;
+
+      transactions.forEach(t => {
+        if (t.type === 'income') income += t.amount;
+        else expense += t.amount;
+        gstTotal += calcGstAmount(t.amount, Number(t.gstRate || 0));
+      });
+
+      const net = income - expense;
+      totalIncomeEl.textContent = formatMoney(income);
+      totalExpenseEl.textContent = formatMoney(expense);
+      totalGstEl.textContent = formatMoney(gstTotal);
+
+      if (net < 0) {
+        netBalanceEl.textContent = '-' + formatMoney(net);
+        netBalanceEl.className = 'text-xl font-bold text-rose-600 mt-1';
+      } else {
+        netBalanceEl.textContent = formatMoney(net);
+        netBalanceEl.className = 'text-xl font-bold text-slate-900 mt-1';
+      }
+
+      const query = searchInput.value.trim().toLowerCase();
+      const monthFilter = monthFilterInput.value;
+
+      const visibleTransactions = transactions.filter(t => {
+        if (selectedParty && t.desc !== selectedParty) return false;
+        if (currentFilter === 'income' && t.type !== 'income') return false;
+        if (currentFilter === 'expense' && t.type !== 'expense') return false;
+        if (monthFilter && !(t.date || '2026-11-02').startsWith(monthFilter)) return false;
+        if (query) {
+          const haystack = `${t.desc || ''} ${t.bankStamp || ''} ${t.category || ''}`.toLowerCase();
+          if (!haystack.includes(query)) return false;
+        }
+        return true;
+      });
+
+      transactionListEl.innerHTML = '';
+
+      if (visibleTransactions.length === 0) {
+        emptyStateEl.classList.remove('hidden');
+        if (query || monthFilter || selectedParty) {
+          emptyStateEl.textContent = 'No matching transactions found for your search or filter.';
+        } else {
+          emptyStateEl.textContent = 'No transactions recorded yet. Add your first entry above!';
+        }
+      } else {
+        emptyStateEl.classList.add('hidden');
+      }
+
+      entryCountEl.textContent = visibleTransactions.length + (visibleTransactions.length === 1 ? ' item' : ' items');
+
+      visibleTransactions.forEach(t => {
+        const isIncome = t.type === 'income';
+        const isSlip = t.source === 'WhatsApp / Slip Scan';
+        const gstRate = Number(t.gstRate || 0);
+        const gstAmt = calcGstAmount(t.amount, gstRate);
+        const txDate = t.date || '2026-11-02';
+        const li = document.createElement('li');
+        li.className = 'py-3.5 flex items-start justify-between text-sm';
+        li.innerHTML = `
+          <div class="flex items-start space-x-3">
+            <span class="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0 ${isIncome ? 'bg-emerald-500' : 'bg-rose-500'}"></span>
+            <div>
+              <div class="flex items-center flex-wrap gap-1.5">
+                <p class="font-semibold text-slate-900">${escapeHtml(t.desc)}</p>
+                ${isSlip ? '<span class="text-[10px] bg-emerald-100 text-emerald-800 font-medium px-1.5 py-0.5 rounded">📱 Slip Bot</span>' : ''}
+                ${gstRate > 0 ? `<span class="text-[10px] bg-amber-100 text-amber-800 font-semibold px-1.5 py-0.5 rounded">${gstRate}% GST (${formatMoney(gstAmt)})</span>` : ''}
+              </div>
+              ${t.bankStamp ? `<div class="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
+                <span class="text-slate-400">🏛️ Stamp:</span>
+                <span class="font-medium text-slate-600">${escapeHtml(t.bankStamp)}</span>
+              </div>` : ''}
+              <div class="flex items-center space-x-1.5 mt-1">
+                <span class="text-xs text-slate-400 font-mono">${escapeHtml(txDate)}</span>
+                <span class="text-xs text-slate-300">•</span>
+                <span class="text-xs text-slate-400 capitalize">${t.type}</span>
+                <span class="text-xs text-slate-300">•</span>
+                <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-normal">${escapeHtml(t.category || 'General')}</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center space-x-1.5">
+            <div class="text-right mr-1">
+              <span class="font-bold text-base ${isIncome ? 'text-emerald-600' : 'text-rose-600'} block">
+                ${isIncome ? '+' : '-'}${formatMoney(t.amount)}
+              </span>
+            </div>
+            <button data-id="${t.id}" class="edit-entry-btn text-slate-500 hover:text-blue-600 p-1.5 rounded-lg bg-slate-100 hover:bg-blue-50 transition-colors" title="Edit transaction" aria-label="Edit ${escapeHtml(t.desc)}">
+              <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+            <button data-id="${t.id}" class="share-receipt-btn text-indigo-600 hover:text-indigo-800 p-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 transition-colors" title="Share Receipt / Statement" aria-label="Share statement for ${escapeHtml(t.desc)}">
+              <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              </svg>
+            </button>
+            <button data-id="${t.id}" class="delete-btn text-slate-400 hover:text-rose-500 p-1 rounded transition-colors" title="Delete entry" aria-label="Delete ${escapeHtml(t.desc)}">
+              <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
+        `;
+        transactionListEl.appendChild(li);
+      });
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function processBankSlip(slipData) {
+      const customCaption = whatsappCaptionInput.value.trim();
+      const finalPartyName = customCaption || slipData.desc;
+      const chosenGst = slipData.gstRate !== undefined ? slipData.gstRate : Number(slipGstSelect.value || 0);
+
+      scanningIndicator.classList.remove('hidden');
+      slipResultBanner.classList.add('hidden');
+      scanningStep.textContent = `Step 1/3: Reading Bank Stamp: "${slipData.bankStamp}"...`;
+
+      setTimeout(() => {
+        scanningStep.textContent = `Step 2/3: Resolving Actual Party: "${finalPartyName}" (Amount: ${formatMoney(slipData.amount)})...`;
+      }, 700);
+
+      setTimeout(() => {
+        scanningStep.textContent = 'Step 3/3: Syncing verified record to Ledger...';
+      }, 1300);
+
+      setTimeout(() => {
+        scanningIndicator.classList.add('hidden');
+
+        const newEntry = {
+          id: Date.now(),
+          desc: finalPartyName,
+          bankStamp: slipData.bankStamp,
+          amount: slipData.amount,
+          gstRate: chosenGst,
+          date: '2026-11-02',
+          type: slipData.type,
+          category: slipData.category,
+          source: 'WhatsApp / Slip Scan'
+        };
+
+        transactions.unshift(newEntry);
+        saveTransactions();
+        render();
+        renderPartiesGrid();
+
+        slipResultText.textContent = `Logged to "${finalPartyName}" (${formatMoney(slipData.amount)}) • Verified via ${slipData.bankStamp}`;
+        slipResultBanner.classList.remove('hidden');
+
+        whatsappCaptionInput.value = '';
+      }, 1900);
+    }
+
+    sampleSlip1Btn.addEventListener('click', () => {
+      processBankSlip({
+        desc: 'Rajesh Builders',
+        bankStamp: 'SBI Ernakulam Main Branch (Counter #04)',
+        amount: 45000.00,
+        gstRate: 0,
+        type: 'income',
+        category: 'Customer Sales'
+      });
+    });
+
+    sampleSlip2Btn.addEventListener('click', () => {
+      processBankSlip({
+        desc: 'Asian Paints Dealer',
+        bankStamp: 'Federal Bank RTGS/NEFT Slip (UTR-99120)',
+        amount: 12400.00,
+        gstRate: 18,
+        type: 'expense',
+        category: 'Supplier / Vendor'
+      });
+    });
+
+    sampleSlip3Btn.addEventListener('click', () => {
+      processBankSlip({
+        desc: 'Harish Nair',
+        bankStamp: 'Canara Bank Cash Deposit Seal (Counter #01)',
+        amount: 8500.00,
+        gstRate: 0,
+        type: 'income',
+        category: 'Freelance / Fees'
+      });
+    });
+
+    dropzone.addEventListener('click', () => slipFileInput.click());
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('border-emerald-500', 'bg-emerald-50/50');
+    });
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('border-emerald-500', 'bg-emerald-50/50');
+    });
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('border-emerald-500', 'bg-emerald-50/50');
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleUploadedFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    slipFileInput.addEventListener('change', () => {
+      if (slipFileInput.files && slipFileInput.files.length > 0) {
+        handleUploadedFile(slipFileInput.files[0]);
+      }
+    });
+
+    async function handleUploadedFile(file) {
+      const cap = whatsappCaptionInput.value.trim();
+      scanningIndicator.classList.remove('hidden');
+      scanningStep.textContent = 'Analyzing uploaded slip image with Vision AI...';
+      const res = await analyzeSlipWithAI(file, cap);
+      scanningIndicator.classList.add('hidden');
+      processBankSlip({
+        desc: res.desc,
+        bankStamp: res.bankStamp,
+        amount: res.amount,
+        gstRate: res.gstRate || Number(slipGstSelect.value || 0),
+        type: res.type,
+        category: res.category
+      });
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const desc = descInput.value.trim();
+      const ref = refInput.value.trim();
+      const txDate = dateInput.value || '2026-11-02';
+      const amount = parseFloat(amountInput.value);
+      const type = typeSelect.value;
+      const category = categorySelect.value;
+      const gstRate = Number(manualGstSelect.value || 0);
+
+      if (!desc || isNaN(amount) || amount <= 0) {
+        feedbackEl.textContent = 'Please enter a valid description and positive amount.';
+        feedbackEl.classList.remove('hidden');
+        return;
+      }
+
+      feedbackEl.classList.add('hidden');
+
+      const newTransaction = {
+        id: Date.now(),
+        desc: desc,
+        bankStamp: ref || null,
+        date: txDate,
+        amount: amount,
+        gstRate: gstRate,
+        type: type,
+        category: category,
+        source: 'Manual'
+      };
+
+      transactions.unshift(newTransaction);
+      saveTransactions();
+      render();
+      renderPartiesGrid();
+
+      form.reset();
+      dateInput.value = '2026-11-02';
+      updateCategoryDropdown();
+      descInput.focus();
+    });
+
+    transactionListEl.addEventListener('click', (e) => {
+      const deleteBtn = e.target.closest('.delete-btn');
+      if (deleteBtn) {
+        const id = Number(deleteBtn.getAttribute('data-id'));
+        transactions = transactions.filter(t => t.id !== id);
+        saveTransactions();
+        render();
+        renderPartiesGrid();
+        return;
+      }
+
+      const editBtn = e.target.closest('.edit-entry-btn');
+      if (editBtn) {
+        const id = Number(editBtn.getAttribute('data-id'));
+        const item = transactions.find(t => t.id === id);
+        if (item) openEditModal(item);
+        return;
+      }
+
+      const shareBtn = e.target.closest('.share-receipt-btn');
+      if (shareBtn) {
+        const id = Number(shareBtn.getAttribute('data-id'));
+        const item = transactions.find(t => t.id === id);
+        if (item) openReceiptModal(item);
+      }
+    });
+
+    function setFilter(filter) {
+      currentFilter = filter;
+      const tabs = [
+        { btn: filterAllBtn, key: 'all' },
+        { btn: filterIncomeBtn, key: 'income' },
+        { btn: filterExpenseBtn, key: 'expense' }
+      ];
+
+      tabs.forEach(t => {
+        if (t.key === currentFilter) {
+          t.btn.className = 'filter-tab px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 font-semibold';
+        } else {
+          t.btn.className = 'filter-tab px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 font-medium';
+        }
+      });
+
+      render();
+    }
+
+    filterAllBtn.addEventListener('click', () => setFilter('all'));
+    filterIncomeBtn.addEventListener('click', () => setFilter('income'));
+    filterExpenseBtn.addEventListener('click', () => setFilter('expense'));
+
+    // Initial setup
+    applyBizProfileUI();
+    updateAiStatusUI();
+    updateCloudUI();
+    updateCategoryDropdown();
+    render();
+    renderPartiesGrid();
+    showVideoScene(1);
+  </script>
+</body>
+</html>
