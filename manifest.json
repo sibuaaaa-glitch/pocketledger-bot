@@ -1,0 +1,17 @@
+{
+  "name": "PocketLedger",
+  "short_name": "PocketLedger",
+  "start_url": "/pocketledger-bot/",
+  "scope": "/pocketledger-bot/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#047857",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/1055/1055644.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
